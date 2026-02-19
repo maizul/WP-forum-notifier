@@ -1,58 +1,48 @@
 document.addEventListener('DOMContentLoaded', () => {
   const slugInput = document.getElementById('pluginSlug');
   const saveBtn = document.getElementById('saveBtn');
-  const activePluginTxt = document.getElementById('activePlugin');
-  const threadLink = document.getElementById('threadLink');
+  const listContainer = document.getElementById('threadList');
 
-  // 1. Initial Load: Get current data from storage
-  chrome.storage.local.get(['pluginSlug', 'lastSeenTitle', 'lastSeenLink'], (data) => {
+  chrome.storage.local.get(['pluginSlug'], (data) => {
     if (data.pluginSlug) {
-      activePluginTxt.textContent = `wordpress.org/plugins/${data.pluginSlug}`;
       slugInput.value = data.pluginSlug;
-    } else {
-      activePluginTxt.textContent = "None set";
-    }
-
-    if (data.lastSeenLink) {
-      threadLink.textContent = data.lastSeenTitle;
-      threadLink.href = data.lastSeenLink;
-    } else {
-      threadLink.textContent = "No recent activity found.";
-      threadLink.style.opacity = "0.5";
+      renderList(data.pluginSlug);
     }
   });
 
-  // 2. Save and Sync Logic
   saveBtn.addEventListener('click', () => {
-    const rawSlug = slugInput.value.trim().toLowerCase();
-    
-    // Clean the slug (in case they pasted a full URL)
-    const slug = rawSlug.replace(/\/$/, "").split('/').pop();
-
+    const slug = slugInput.value.trim().toLowerCase().replace(/\/$/, "").split('/').pop();
     if (slug) {
-      // Visual feedback: Button loading state
-      saveBtn.disabled = true;
-      saveBtn.textContent = "Checking...";
-      
       chrome.storage.local.set({ pluginSlug: slug }, () => {
-        activePluginTxt.textContent = `wordpress.org/plugins/${slug}`;
-        
-        // 3. Tell background script to fetch immediately
-        chrome.runtime.sendMessage({ action: "checkNow" }, (response) => {
-          // Wait 1.5 seconds to give the background fetch time to finish
-          setTimeout(() => {
-            chrome.storage.local.get(['lastSeenTitle', 'lastSeenLink'], (newData) => {
-              if (newData.lastSeenLink) {
-                threadLink.textContent = newData.lastSeenTitle;
-                threadLink.href = newData.lastSeenLink;
-                threadLink.style.opacity = "1";
-              }
-              saveBtn.disabled = false;
-              saveBtn.textContent = "Track";
-            });
-          }, 1500);
-        });
+        renderList(slug);
       });
     }
   });
+
+  function renderList(slug) {
+    listContainer.innerHTML = "<p class='loading'>Fetching...</p>";
+
+    chrome.runtime.sendMessage({ action: "fetchFeed", slug: slug }, (response) => {
+      if (chrome.runtime.lastError || !response || response.error) {
+        listContainer.innerHTML = "<p class='error'>Connection failed. Please reload.</p>";
+        return;
+      }
+
+      listContainer.innerHTML = "";
+      response.data.forEach(item => {
+        const a = document.createElement('a');
+        a.href = item.link;
+        a.target = "_blank";
+        a.className = "thread-card";
+        a.innerHTML = `
+          <span class="dot"></span>
+          <div class="thread-info">
+            <span class="title">${item.title}</span>
+            <span class="author">Last reply by: <strong>${item.author}</strong></span>
+          </div>
+        `;
+        listContainer.appendChild(a);
+      });
+    });
+  }
 });

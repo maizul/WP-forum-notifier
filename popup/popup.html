@@ -5,26 +5,22 @@
 </head>
 <body>
   <div class="container">
-    <h2>
-      <span style="color: #007cba;">●</span> WP Notifier
-    </h2>
+    <header>
+      <h2>TutorLMS Tracker</h2>
+      <div class="input-group">
+        <input type="text" id="pluginSlug" placeholder="Enter plugin slug...">
+        <button id="saveBtn">Track</button>
+      </div>
+    </header>
+
+    <div class="list-container">
+      <p class="label">Latest Unresolved Threads</p>
+      <div id="threadList">
+        <p class="loading">Loading threads...</p>
+      </div>
+    </div>
     
-    <div class="input-group">
-      <input type="text" id="pluginSlug" placeholder="Plugin slug...">
-      <button id="saveBtn">Track</button>
-    </div>
-
-    <div class="status-bar">
-      <p class="label">Monitoring</p>
-      <p id="activePlugin">Loading...</p>
-    </div>
-
-    <div class="thread-box">
-      <p class="label">Latest Activity</p>
-      <a href="#" id="threadLink" target="_blank">Searching for replies...</a>
-    </div>
-
-    <p class="footer">Syncing every 5 mins</p>
+    <p class="footer">Syncing every 5 minutes</p>
   </div>
   <script src="popup.js"></script>
 </body>

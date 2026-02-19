@@ -1,96 +1,62 @@
-/**
- * WP Forum Notifier - Background Service Worker
- * Manifest V3 (2026 Standard)
- */
+// Background Alarm: Check for updates every 5 minutes
+chrome.alarms.create('checkUnresolved', { periodInMinutes: 5 });
 
-// 1. Listen for the Alarm to poll the RSS feed every 5 minutes
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === 'checkForum') {
-    fetchLatestReplies();
-  }
+  if (alarm.name === 'checkUnresolved') performSilentUpdate();
 });
 
-// 2. Listen for "Manual Sync" messages from the popup.js
+// Listener for Popup requests
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.action === "checkNow") {
-    fetchLatestReplies();
-    sendResponse({ status: "sync_started" });
-  }
-  return true; // Keeps the messaging channel open
-});
+  if (request.action === "fetchFeed") {
+    const url = `https://wordpress.org/support/plugin/${request.slug}/unresolved/feed/`;
 
-// 3. Initialize the alarm when the extension is installed
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.alarms.create('checkForum', { periodInMinutes: 5 });
-  console.log("WP Notifier: Alarm scheduled for every 5 minutes.");
-});
-
-/**
- * Core Logic: Fetches RSS and triggers notification if new content is found
- */
-async function fetchLatestReplies() {
-  chrome.storage.local.get(['pluginSlug', 'lastSeenDate'], async (data) => {
-    if (!data.pluginSlug) return;
-
-    const FEED_URL = `https://wordpress.org/support/plugin/${data.pluginSlug}/feed/`;
-
-    try {
-      const response = await fetch(FEED_URL);
-      if (!response.ok) throw new Error('Network response was not ok');
-      const text = await response.text();
-
-      // Extract the first <item> using Regex (MV3 compatible)
-      const itemMatch = text.match(/<item>([\s\S]*?)<\/item>/);
-      if (!itemMatch) return;
-
-      const itemContent = itemMatch[1];
-      const title = itemContent.match(/<title>(.*?)<\/title>/)?.[1] || "New Reply";
-      const link = itemContent.match(/<link>(.*?)<\/link>/)?.[1] || "";
-      const pubDate = itemContent.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || "";
-
-      // Only notify if the pubDate is different from what we last saw
-      if (pubDate !== data.lastSeenDate) {
-        showNotification(title, link);
-        
-        // Update storage so we don't notify for the same post twice
-        chrome.storage.local.set({ 
-          lastSeenDate: pubDate,
-          lastSeenTitle: title,
-          lastSeenLink: link
+    fetch(url)
+      .then(res => res.text())
+      .then(text => {
+        // Regex to extract items and the Author (dc:creator)
+        const items = [...text.matchAll(/<item>([\s\S]*?)<\/item>/g)].slice(0, 10).map(item => {
+          const content = item[1];
+          const author = content.match(/<dc:creator><!\[CDATA\[(.*?)\]\]><\/dc:creator>/)?.[1] || 
+                         content.match(/<dc:creator>(.*?)<\/dc:creator>/)?.[1] || "Unknown";
+          
+          return {
+            title: content.match(/<title>(.*?)<\/title>/)?.[1] || "Untitled",
+            link: content.match(/<link>(.*?)<\/link>/)?.[1] || "#",
+            author: author,
+            guid: content.match(/<guid.*?>([\s\S]*?)<\/guid>/)?.[1]
+          };
         });
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-    }
-  });
-}
+        sendResponse({ data: items });
+      })
+      .catch(err => sendResponse({ error: true }));
 
-/**
- * Triggers the OS-level notification
- */
-function showNotification(title, threadUrl) {
-  const notificationId = `wp-notif-${Date.now()}`;
-
-  chrome.notifications.create(notificationId, {
-    type: 'basic',
-    iconUrl: '/icons/icon128.png', // Ensure this path is correct in your folder
-    title: 'New Forum Activity',
-    message: title,
-    priority: 2
-  });
-
-  // Store the URL for this specific notification ID
-  chrome.storage.local.set({ [notificationId]: threadUrl });
-}
-
-// 4. Handle Notification Clicks (Opens the thread in a new tab)
-chrome.notifications.onClicked.addListener((notificationId) => {
-  chrome.storage.local.get([notificationId], (result) => {
-    if (result[notificationId]) {
-      chrome.tabs.create({ url: result[notificationId] });
-      chrome.notifications.clear(notificationId);
-      // Clean up the stored URL after use
-      chrome.storage.local.remove(notificationId);
-    }
-  });
+    return true; // Keeps channel open for async fetch
+  }
 });
+
+// Logic for background notifications
+async function performSilentUpdate() {
+  const data = await chrome.storage.local.get(['pluginSlug', 'lastSeenGuid']);
+  if (!data.pluginSlug) return;
+
+  try {
+    const res = await fetch(`https://wordpress.org/support/plugin/${data.pluginSlug}/unresolved/feed/`);
+    const text = await res.text();
+    const firstItem = text.match(/<item>([\s\S]*?)<\/item>/);
+    if (!firstItem) return;
+
+    const guid = firstItem[1].match(/<guid.*?>([\s\S]*?)<\/guid>/)?.[1];
+    const title = firstItem[1].match(/<title>(.*?)<\/title>/)?.[1];
+
+    if (guid && guid !== data.lastSeenGuid) {
+      chrome.notifications.create({
+        type: 'basic',
+        iconUrl: '/icons/icon128.png',
+        title: 'New Forum Post',
+        message: title,
+        priority: 2
+      });
+      chrome.storage.local.set({ lastSeenGuid: guid });
+    }
+  } catch (e) { console.error("BG Sync Error", e); }
+}
