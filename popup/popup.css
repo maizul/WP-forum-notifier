@@ -1,0 +1,112 @@
+:root {
+  --primary: #007cba;
+  --bg-gradient: linear-gradient(135px, #ffffff 0%, #f0f4f8 100%);
+  --text-main: #1e1e1e;
+  --text-muted: #64748b;
+  --radius: 16px; /* High rounding for modern look */
+  --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+body {
+  width: 320px;
+  margin: 0;
+  padding: 16px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg-gradient);
+  color: var(--text-main);
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Rounded Input Group */
+.input-group {
+  display: flex;
+  background: white;
+  padding: 4px;
+  border-radius: var(--radius);
+  border: 1px solid #e2e8f0;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+input {
+  flex: 1;
+  border: none;
+  padding: 10px 12px;
+  font-size: 14px;
+  background: transparent;
+  outline: none;
+}
+
+button {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: calc(var(--radius) - 4px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+button:hover {
+  background: #006ba1;
+  transform: translateY(-1px);
+}
+
+/* Sleek Thread Card */
+.thread-box {
+  background: white;
+  padding: 16px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  border: 1px solid rgba(255,255,255,0.8);
+  transition: all 0.3s ease;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+#activePlugin {
+  font-weight: 600;
+  color: var(--primary);
+  margin: 0;
+}
+
+#threadLink {
+  display: block;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-main);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+#threadLink:hover {
+  color: var(--primary);
+}
+
+.footer {
+  font-size: 11px;
+  text-align: center;
+  color: var(--text-muted);
+  margin-top: 8px;
+}

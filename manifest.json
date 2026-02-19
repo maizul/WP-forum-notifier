@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "TutorLMS Forum Notifier",
+  "version": "1.0",
+  "permissions": ["notifications", "storage", "alarms"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "/popup/popup.html"
+  }
+}
