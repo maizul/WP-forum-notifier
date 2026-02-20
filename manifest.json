@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "TutorLMS Forum Notifier",
+  "name": "WP Forum Notifier",
   "version": "1.0.1",
-  "description": "Track the 10 latest unresolved TutorLMS forum threads.",
+  "description": "Track the 10 latest unresolved WP forum threads.",
   "permissions": ["notifications", "storage", "alarms"],
   "host_permissions": ["https://wordpress.org/*"],
   "background": {

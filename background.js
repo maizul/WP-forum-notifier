@@ -1,5 +1,5 @@
 // Background Alarm: Check for updates every 5 minutes
-chrome.alarms.create('checkUnresolved', { periodInMinutes: 5 });
+chrome.alarms.create('checkUnresolved', { periodInMinutes: 1 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'checkUnresolved') performSilentUpdate();
