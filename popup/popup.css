@@ -88,3 +88,28 @@ button {
 .loading{ margin-left: 8px; }
 
 .footer { font-size: 10px; text-align: center; color: var(--muted); margin-top: 12px; }
+
+.thread-card.status-waiting .status-dot {
+  background: #d63638; /* Red - Action required */
+  box-shadow: 0 0 5px rgba(214, 54, 56, 0.5);
+}
+
+.thread-card.status-responded .status-dot {
+  background: #c3c4c7; /* Gray - Team handled it */
+}
+
+.thread-card.status-waiting {
+  background: #fffafa; /* Very light red tint */
+}
+
+.thread-card.status-responded {
+  opacity: 0.8;
+}
+
+.author strong {
+  color: var(--primary);
+}
+
+.status-waiting .author strong {
+  color: #d63638; /* Highlight the customer's name */
+}

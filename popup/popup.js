@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const saveBtn = document.getElementById('saveBtn');
   const listContainer = document.getElementById('threadList');
 
+  chrome.action.setBadgeText({ text: "" });
+
   chrome.storage.local.get(['pluginSlug'], (data) => {
     if (data.pluginSlug) {
       slugInput.value = data.pluginSlug;
@@ -11,20 +13,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   saveBtn.addEventListener('click', () => {
-    const slug = slugInput.value.trim().toLowerCase().replace(/\/$/, "").split('/').pop();
+    const slug = slugInput.value.trim().toLowerCase().split('/').filter(Boolean).pop();
     if (slug) {
-      chrome.storage.local.set({ pluginSlug: slug }, () => {
-        renderList(slug);
-      });
+      chrome.storage.local.set({ pluginSlug: slug }, () => renderList(slug));
     }
   });
 
   function renderList(slug) {
-    listContainer.innerHTML = "<p class='loading'>Fetching...</p>";
+    listContainer.innerHTML = "<p class='loading'>Scanning active threads...</p>";
 
-    chrome.runtime.sendMessage({ action: "fetchFeed", slug: slug }, (response) => {
+    chrome.runtime.sendMessage({ action: "fetchActiveFeed", slug: slug }, (response) => {
       if (chrome.runtime.lastError || !response || response.error) {
-        listContainer.innerHTML = "<p class='error'>Connection failed. Please reload.</p>";
+        listContainer.innerHTML = "<p class='error' style='margin-left:10px;'>Sync error. Please reload.</p>";
         return;
       }
 
@@ -33,12 +33,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const a = document.createElement('a');
         a.href = item.link;
         a.target = "_blank";
-        a.className = "thread-card";
+        
+        // CSS Mapping: Customer = status-waiting | Team = status-responded
+        a.className = `thread-card ${item.isTeam ? 'status-responded' : 'status-waiting'}`;
+        
         a.innerHTML = `
-          <span class="dot"></span>
+          <span class="status-dot"></span>
           <div class="thread-info">
             <span class="title">${item.title}</span>
-            <span class="author">Last reply by: <strong>${item.author}</strong></span>
+            <span class="author">Latest reply: <strong>${item.replier}</strong></span>
           </div>
         `;
         listContainer.appendChild(a);

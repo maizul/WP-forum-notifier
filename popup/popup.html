@@ -6,21 +6,21 @@
 <body>
   <div class="container">
     <header>
-      <h2>WP Forum Notifier</h2>
+      <h2>Team SLA Watcher</h2>
       <div class="input-group">
-        <input type="text" id="pluginSlug" placeholder="Enter plugin slug...">
+        <input type="text" id="pluginSlug" placeholder="Enter plugin slug (e.g., tutor)">
         <button id="saveBtn">Track</button>
       </div>
     </header>
 
     <div class="list-container">
-      <p class="label">Latest Unresolved Threads</p>
+      <p class="label">Latest Active Threads</p>
       <div id="threadList">
-        <p class="loading">Loading threads...</p>
+        <p class="loading">Scanning active threads...</p>
       </div>
     </div>
     
-    <p class="footer">Syncing every minute</p>
+    <p class="footer">Auto-syncing every 2 minutes</p>
   </div>
   <script src="popup.js"></script>
 </body>
